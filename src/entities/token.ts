@@ -8,7 +8,7 @@ import { Currency } from './currency'
  */
 export class Token extends Currency {
   public readonly chainId: ChainId
-  public readonly address: string
+  public address: string
 
   public constructor(chainId: ChainId, address: string, decimals: number, symbol?: string, name?: string) {
     super(decimals, symbol, name)
