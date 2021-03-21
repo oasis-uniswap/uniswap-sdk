@@ -7,7 +7,6 @@ import Factory from '../abis/Factory.json'
 import {
   BigintIsh,
   FACTORY_ADDRESS,
-  ZERO_ADDRESS,
   MINIMUM_LIQUIDITY,
   ZERO,
   ONE,
@@ -19,9 +18,10 @@ import {
 import { sqrt, parseBigintIsh } from '../utils'
 import { InsufficientReservesError, InsufficientInputAmountError } from '../errors'
 import { Token } from './token'
-import {getNetwork} from "@ethersproject/networks";
-import {getDefaultProvider} from "@ethersproject/providers";
-import {Contract} from "@ethersproject/contracts";
+import {getNetwork} from "@ethersproject/networks"
+import {getDefaultProvider} from "@ethersproject/providers"
+import {Contract} from "@ethersproject/contracts"
+import {runLoopOnce} from "deasync"
 
 let PAIR_ADDRESS_CACHE: { [token0Address: string]: { [token1Address: string]: string } } = {}
 
@@ -29,13 +29,13 @@ export class Pair {
   public readonly liquidityToken: Token
   private readonly tokenAmounts: [TokenAmount, TokenAmount]
 
-  public static async fetchPairAddress(
+  public static fetchPairAddress(
       chainId: ChainId,
       _tokenAAddress?: string,
       _tokenBAddress?: string
-  ): Promise<string> {
+  ): string {
     let provider
-    if (chainId == 69){
+    if (chainId === 69){
       provider = getDefaultProvider("https://rpc.oasiseth.org:8545")
     }
     else{
@@ -43,29 +43,36 @@ export class Pair {
       provider = getDefaultProvider(network)
     }
 
-    return new Contract(FACTORY_ADDRESS, Factory, provider).getPair(_tokenAAddress, _tokenBAddress)
+    let result = "", isReturn = false
+    new Contract(FACTORY_ADDRESS, Factory, provider).getPair(_tokenAAddress, _tokenBAddress).then((address: string) =>{
+      isReturn = true
+      result = address
+    })
+
+    while(!isReturn){
+      runLoopOnce()
+    }
+
+    return result
   }
 
   public static getAddress(tokenA: Token, tokenB: Token): string {
     const tokens = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA] // does safety checks
     if (PAIR_ADDRESS_CACHE?.[tokens[0].address]?.[tokens[1].address] === undefined) {
-      Pair.fetchPairAddress(
-          tokens[0].chainId,
-          tokens[0].address,
-          tokens[1].address
-      ).then((address: string) =>{
-        PAIR_ADDRESS_CACHE = {
-          ...PAIR_ADDRESS_CACHE,
-          [tokens[0].address]: {
-            ...PAIR_ADDRESS_CACHE?.[tokens[0].address],
-            [tokens[1].address]: address
-          }
+      PAIR_ADDRESS_CACHE = {
+        ...PAIR_ADDRESS_CACHE,
+        [tokens[0].address]: {
+          ...PAIR_ADDRESS_CACHE?.[tokens[0].address],
+          [tokens[1].address]: Pair.fetchPairAddress(
+              tokens[0].chainId,
+              tokens[0].address,
+              tokens[1].address
+          )
         }
-      })
-      return ZERO_ADDRESS;
-    }else{
-      return PAIR_ADDRESS_CACHE[tokens[0].address][tokens[1].address]
+      }
     }
+
+    return PAIR_ADDRESS_CACHE[tokens[0].address][tokens[1].address]
   }
 
   public constructor(tokenAmountA: TokenAmount, tokenAmountB: TokenAmount) {
@@ -81,16 +88,6 @@ export class Pair {
         'Uniswap V2'
     )
     this.tokenAmounts = tokenAmounts as [TokenAmount, TokenAmount]
-
-    if (this.liquidityToken.address === ZERO_ADDRESS) {
-      Pair.fetchPairAddress(
-          tokenAmounts[0].token.chainId,
-          tokenAmounts[0].token.address,
-          tokenAmounts[1].token.address
-      ).then((address: string) =>{
-        this.liquidityToken.address = address
-      })
-    }
   }
 
   /**
