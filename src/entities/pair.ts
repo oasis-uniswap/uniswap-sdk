@@ -60,9 +60,12 @@ export class Pair {
             }
           }
 
-          let pairKey = tokens[0].address.concat(tokens[1].address)
-          if (PAIR_OBJ_CACHE[pairKey])
-            PAIR_OBJ_CACHE[pairKey].liquidityToken = pairToken
+          let pairKey1 = tokens[0].address.concat(tokens[1].address)
+          let pairKey2 = tokens[1].address.concat(tokens[0].address)
+          if (PAIR_OBJ_CACHE[pairKey1])
+            PAIR_OBJ_CACHE[pairKey1].liquidityToken = pairToken
+          if (PAIR_OBJ_CACHE[pairKey2])
+            PAIR_OBJ_CACHE[pairKey2].liquidityToken = pairToken
         }
       })
     }
@@ -90,6 +93,7 @@ export class Pair {
           'UNI-V2',
           'Uniswap V2'
       )
+
       if (pairToken) {
         PAIR_ADDRESS_CACHE = {
           ...PAIR_ADDRESS_CACHE,
@@ -99,9 +103,12 @@ export class Pair {
           }
         }
 
-        let pairKey = tokens[0].address.concat(tokens[1].address)
-        if (PAIR_OBJ_CACHE[pairKey])
-          PAIR_OBJ_CACHE[pairKey].liquidityToken = pairToken
+        let pairKey1 = tokens[0].address.concat(tokens[1].address)
+        let pairKey2 = tokens[1].address.concat(tokens[0].address)
+        if (PAIR_OBJ_CACHE[pairKey1])
+          PAIR_OBJ_CACHE[pairKey1].liquidityToken = pairToken
+        if (PAIR_OBJ_CACHE[pairKey2])
+          PAIR_OBJ_CACHE[pairKey2].liquidityToken = pairToken
       }
     }
   }
