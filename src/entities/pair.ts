@@ -24,7 +24,8 @@ import {getNetwork} from "@ethersproject/networks"
 import {getDefaultProvider} from "@ethersproject/providers"
 import {Contract} from "@ethersproject/contracts"
 
-let PAIR_ADDRESS_CACHE: { [token0Address: string]: { [token1Address: string]: string } } = {}
+let PAIR_ADDRESS_CACHE: { [token0Address: string]: { [token1Address: string]: string } } =
+    localStorage.getItem('PAIR_ADDRESS_CACHE') ? JSON.parse(<string>localStorage.getItem('PAIR_ADDRESS_CACHE')) : {}
 let PAIR_OBJ_CACHE: { [pairKey: string]: Pair } = {}
 
 export class Pair {
@@ -63,6 +64,7 @@ export class Pair {
                 }
             }
         }
+        localStorage.setItem('PAIR_ADDRESS_CACHE', JSON.stringify(PAIR_ADDRESS_CACHE))
     }
 
     public static fetchPairAddress(
@@ -104,6 +106,8 @@ export class Pair {
                             [tokens[0].address]: pairAddress
                         }
                     }
+
+                    localStorage.setItem('PAIR_ADDRESS_CACHE', JSON.stringify(PAIR_ADDRESS_CACHE))
 
                     let pairKey1 = tokens[0].address.concat(tokens[1].address)
                     let pairKey2 = tokens[1].address.concat(tokens[0].address)
